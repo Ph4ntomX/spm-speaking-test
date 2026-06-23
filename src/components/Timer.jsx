@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { useChime } from '../hooks/useChime'
+import { useSfx } from '../hooks/useSfx'
 
 export default function Timer({ seconds, running, onComplete }) {
   const [remaining, setRemaining] = useState(seconds)
   const intervalRef = useRef(null)
   const hasCompleted = useRef(false)
   const chimePlayed = useRef(false)
-  const { playChime, playDone } = useChime()
+  const { playWarning, playTimeUp } = useSfx()
 
   useEffect(() => {
     setRemaining(seconds)
@@ -25,20 +25,20 @@ export default function Timer({ seconds, running, onComplete }) {
           clearInterval(intervalRef.current)
           if (!hasCompleted.current) {
             hasCompleted.current = true
-            playDone()
+            playTimeUp()
             setTimeout(() => onComplete?.(), 0)
           }
           return 0
         }
         if (prev === 6 && !chimePlayed.current) {
           chimePlayed.current = true
-          playChime()
+          playWarning()
         }
         return prev - 1
       })
     }, 1000)
     return () => clearInterval(intervalRef.current)
-  }, [running, onComplete, playChime, playDone])
+  }, [running, onComplete, playWarning, playTimeUp])
 
   const minutes = Math.floor(remaining / 60)
   const secs = remaining % 60
