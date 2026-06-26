@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { Play, SkipForward, RotateCcw } from 'lucide-react'
 import Timer from '../components/Timer'
 import { part1IntroQuestion, part1TopicQuestions } from '../data/prompts'
+import { useSfx } from '../hooks/useSfx'
 
 /**
  * Part 1: Individual Short Turn
@@ -27,6 +28,7 @@ export default function Part1Practice() {
   const [phase, setPhase] = useState(PHASES.IDLE)
   const [topicQs, setTopicQs] = useState({ a: '', b: '' })
   const [timerKey, setTimerKey] = useState(0)
+  const { playTransition } = useSfx()
 
   const start = () => {
     setTopicQs(pickTwo())
@@ -35,15 +37,14 @@ export default function Part1Practice() {
   }
 
   const advance = useCallback(() => {
+    playTransition()
     setPhase((prev) => {
       const i = phaseOrder.indexOf(prev)
-      if (i < phaseOrder.length - 1) {
-        setTimerKey((k) => k + 1)
-        return phaseOrder[i + 1]
-      }
+      if (i < phaseOrder.length - 1) return phaseOrder[i + 1]
       return PHASES.DONE
     })
-  }, [])
+    setTimerKey((k) => k + 1)
+  }, [playTransition])
 
   const skip = () => advance()
   const reset = () => { setPhase(PHASES.IDLE); setTopicQs({ a: '', b: '' }) }
@@ -82,7 +83,7 @@ export default function Part1Practice() {
 
         {info && (
           <div className="w-full flex flex-col items-center gap-5 animate-fade-in">
-            {/* Step indicator */}
+            {/* Step indicator — clickable */}
             <div className="flex items-center gap-1.5 flex-wrap justify-center">
               {['A: Intro', 'B: Intro', 'A: Topic', 'B: Topic'].map((label, i) => {
                 const isActive = i === currentIdx
@@ -90,9 +91,12 @@ export default function Part1Practice() {
                 return (
                   <div key={label} className="flex items-center gap-1.5">
                     {i > 0 && <div className={`w-4 h-0.5 rounded ${isDone ? 'bg-blue-400' : 'bg-stone-200 dark:bg-stone-600'}`} />}
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full transition-all duration-200 ${isActive ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 shadow-sm' : isDone ? 'bg-stone-200 text-stone-500 dark:bg-stone-600 dark:text-stone-400' : 'bg-stone-100 text-stone-400 dark:bg-stone-700 dark:text-stone-500'}`}>
+                    <button
+                      onClick={() => { setPhase(phaseOrder[i]); setTimerKey((k) => k + 1) }}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-blue-300 ${isActive ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 shadow-sm' : isDone ? 'bg-stone-200 text-stone-500 dark:bg-stone-600 dark:text-stone-400' : 'bg-stone-100 text-stone-400 dark:bg-stone-700 dark:text-stone-500'}`}
+                    >
                       {label}
-                    </span>
+                    </button>
                   </div>
                 )
               })}
@@ -108,7 +112,7 @@ export default function Part1Practice() {
               <p className="text-xl font-serif font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">{info.question}</p>
             </div>
 
-            <Timer key={timerKey} seconds={info.seconds} running={true} onComplete={advance} />
+            <Timer key={timerKey} seconds={info.seconds} onComplete={advance} />
 
             <div className="flex gap-3">
               <button onClick={skip} className="btn-secondary">

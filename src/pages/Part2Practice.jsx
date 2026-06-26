@@ -37,10 +37,11 @@ export default function Part2Practice() {
     playTransition()
     setPhase((prev) => {
       const i = phaseOrder.indexOf(prev)
-      if (i < phaseOrder.length - 1) { setTimerKey((k) => k + 1); return phaseOrder[i + 1] }
+      if (i < phaseOrder.length - 1) return phaseOrder[i + 1]
       if (setIndex !== null) markCompleted(setIndex, part2Sets.length)
       return PHASES.DONE
     })
+    setTimerKey((k) => k + 1)
   }, [setIndex, markCompleted, playTransition])
   const skip = () => advance()
   const reset = () => { setPhase(PHASES.IDLE); setSet(null); setSetIndex(null) }
@@ -71,7 +72,7 @@ export default function Part2Practice() {
 
         {phase !== PHASES.IDLE && phase !== PHASES.DONE && set && (
           <div className="w-full space-y-5 animate-fade-in">
-            {/* Phase steps */}
+            {/* Phase steps — clickable */}
             <div className="flex items-center gap-1.5 flex-wrap justify-center">
               {phaseOrder.map((p, i) => {
                 const isActive = i === currentPhaseIdx
@@ -80,9 +81,12 @@ export default function Part2Practice() {
                 return (
                   <div key={p} className="flex items-center gap-1.5">
                     {i > 0 && <div className={`w-4 h-0.5 rounded ${isDone ? 'bg-green-400' : 'bg-stone-200 dark:bg-stone-600'}`} />}
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full transition-all duration-200 ${isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 shadow-sm' : isDone ? 'bg-stone-200 text-stone-500 dark:bg-stone-600 dark:text-stone-400' : 'bg-stone-100 text-stone-400 dark:bg-stone-700 dark:text-stone-500'}`}>
+                    <button
+                      onClick={() => { setPhase(p); setTimerKey((k) => k + 1) }}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-green-300 ${isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 shadow-sm' : isDone ? 'bg-stone-200 text-stone-500 dark:bg-stone-600 dark:text-stone-400' : 'bg-stone-100 text-stone-400 dark:bg-stone-700 dark:text-stone-500'}`}
+                    >
                       {labels[i]}
-                    </span>
+                    </button>
                   </div>
                 )
               })}
@@ -105,14 +109,8 @@ export default function Part2Practice() {
               </ul>
             </div>
 
-            {/* Other candidate dimmed */}
-            <div className="rounded-lg p-3 border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 opacity-50">
-              <p className="text-xs font-bold text-stone-500 dark:text-stone-400">Candidate {activeCandidate === 'A' ? 'B' : 'A'}</p>
-              <p className="text-sm text-stone-600 dark:text-stone-400">{(activeCandidate === 'A' ? set.b : set.a)?.topic}</p>
-            </div>
-
             <p className="text-sm font-medium text-stone-700 dark:text-stone-300 text-center">{currentConfig.label}</p>
-            <Timer key={timerKey} seconds={currentConfig.seconds} running={true} onComplete={advance} />
+            <Timer key={timerKey} seconds={currentConfig.seconds} onComplete={advance} />
 
             <div className="flex gap-3 justify-center">
               <button onClick={skip} className="btn-secondary"><SkipForward size={16} /> Skip</button>
