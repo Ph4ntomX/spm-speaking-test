@@ -81,7 +81,7 @@ export default function Part1Runner({ topics, onComplete, onStop }) {
         <p className="text-xl font-serif font-semibold text-gray-900 dark:text-gray-100 leading-relaxed">{info.question}</p>
       </div>
 
-      <Timer key={timerKey} seconds={info.seconds} onComplete={advance} />
+      <Timer key={timerKey} seconds={info.seconds} buffer={2} onComplete={advance} />
 
       <div className="flex gap-3">
         <button onClick={advance} className="btn-secondary"><SkipForward size={16} /> Skip</button>

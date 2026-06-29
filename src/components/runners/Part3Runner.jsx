@@ -74,20 +74,19 @@ export default function Part3Runner({ set, onComplete, onStop }) {
 
   const handleTimerPause = (isPaused) => { timerPausedRef.current = isPaused }
   const handleTimerReset = () => {
-    // Subtract this phase's counted time from totals, then reset phase time
     totalRef.current.a -= phaseTimeA
     totalRef.current.b -= phaseTimeB
     setPhaseTimeA(0); setPhaseTimeB(0); setSpeakingActive(false); timerPausedRef.current = false
     if (bufferTimeout.current) clearTimeout(bufferTimeout.current)
-    bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 5000)
+    bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 2000)
   }
 
-  // Reset per-phase time + delay speaking by buffer
+  // Reset per-phase time + delay speaking by buffer (2s for discussion phases)
   useEffect(() => {
     setPhaseTimeA(0); setPhaseTimeB(0); setSpeakingActive(false); setCurrentTurn('A')
     timerPausedRef.current = false
     if (bufferTimeout.current) clearTimeout(bufferTimeout.current)
-    if (isDiscussion) bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 5000)
+    if (isDiscussion) bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 2000)
     return () => { if (bufferTimeout.current) clearTimeout(bufferTimeout.current) }
   }, [phase, isDiscussion])
 
@@ -180,7 +179,7 @@ export default function Part3Runner({ set, onComplete, onStop }) {
         </div>
       )}
 
-      <Timer key={timerKey} seconds={currentConfig.seconds} onComplete={advance} onPauseChange={handleTimerPause} onReset={handleTimerReset} />
+      <Timer key={timerKey} seconds={currentConfig.seconds} buffer={phase === 'prep' ? 5 : 2} onComplete={advance} onPauseChange={handleTimerPause} onReset={handleTimerReset} />
 
       <div className="flex gap-3 justify-center">
         <button onClick={advance} className="btn-secondary"><SkipForward size={16} /> Skip</button>
