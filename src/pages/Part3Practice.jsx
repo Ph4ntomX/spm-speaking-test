@@ -59,21 +59,35 @@ export default function Part3Practice() {
   const [totalTimeA, setTotalTimeA] = useState(0)
   const [totalTimeB, setTotalTimeB] = useState(0)
   const speakInterval = useRef(null)
+  const bufferTimeout = useRef(null)
+  const [speakingActive, setSpeakingActive] = useState(false)
+  const timerPausedRef = useRef(false)
+
+  const handleTimerPause = (isPaused) => { timerPausedRef.current = isPaused }
+  const handleTimerReset = () => { setPhaseTimeA(0); setPhaseTimeB(0); setSpeakingActive(false); timerPausedRef.current = false; if (bufferTimeout.current) clearTimeout(bufferTimeout.current); bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 5000) }
 
   const isDiscussion = phase === PHASES.DISCUSS || phase === PHASES.DECIDE || phase === PHASES.OPINION
 
-  // Reset per-phase timers when phase changes
+  // Reset per-phase timers when phase changes + delay speaking counter by buffer
   useEffect(() => {
     setPhaseTimeA(0)
     setPhaseTimeB(0)
-  }, [phase])
+    setSpeakingActive(false)
+    timerPausedRef.current = false
+    if (bufferTimeout.current) clearTimeout(bufferTimeout.current)
+    if (isDiscussion) {
+      bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 5000)
+    }
+    return () => { if (bufferTimeout.current) clearTimeout(bufferTimeout.current) }
+  }, [phase, isDiscussion])
 
-  // Count speaking time
+  // Count speaking time — respects timer pause
   useEffect(() => {
     if (speakInterval.current) clearInterval(speakInterval.current)
-    if (!isDiscussion) return
+    if (!speakingActive) return
 
     speakInterval.current = setInterval(() => {
+      if (timerPausedRef.current) return // skip tick when timer is paused
       if (currentTurn === 'A') {
         setPhaseTimeA((t) => t + 1)
         setTotalTimeA((t) => t + 1)
@@ -83,7 +97,7 @@ export default function Part3Practice() {
       }
     }, 1000)
     return () => { if (speakInterval.current) clearInterval(speakInterval.current) }
-  }, [currentTurn, isDiscussion])
+  }, [currentTurn, speakingActive])
 
   const start = () => {
     const idx = pickRandom(part3Sets.length)
@@ -137,9 +151,12 @@ export default function Part3Practice() {
                 return (
                   <div key={label} className="flex items-center gap-1.5">
                     {i > 0 && <div className={`w-4 h-0.5 rounded ${isDone ? 'bg-purple-400' : 'bg-stone-200 dark:bg-stone-600'}`} />}
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full transition-all duration-200 ${isActive ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 shadow-sm' : isDone ? 'bg-stone-200 text-stone-500 dark:bg-stone-600 dark:text-stone-400' : 'bg-stone-100 text-stone-400 dark:bg-stone-700 dark:text-stone-500'}`}>
+                    <button
+                      onClick={() => { setPhase(phaseOrder[i]); setTimerKey((k) => k + 1); setCurrentTurn('A') }}
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full transition-all duration-200 cursor-pointer hover:ring-2 hover:ring-purple-300 ${isActive ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 shadow-sm' : isDone ? 'bg-stone-200 text-stone-500 dark:bg-stone-600 dark:text-stone-400' : 'bg-stone-100 text-stone-400 dark:bg-stone-700 dark:text-stone-500'}`}
+                    >
                       {label}
-                    </span>
+                    </button>
                   </div>
                 )
               })}
@@ -183,7 +200,7 @@ export default function Part3Practice() {
               </div>
             )}
 
-            <Timer key={timerKey} seconds={currentConfig.seconds} running={true} onComplete={advance} />
+            <Timer key={timerKey} seconds={currentConfig.seconds} onComplete={advance} onPauseChange={handleTimerPause} onReset={handleTimerReset} />
 
             <div className="flex gap-3 justify-center">
               <button onClick={skip} className="btn-secondary"><SkipForward size={16} /> Skip</button>

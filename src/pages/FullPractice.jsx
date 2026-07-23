@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect } from 'react'
-import { Play, SkipForward, RotateCcw } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { Play, SkipForward } from 'lucide-react'
 import Timer from '../components/Timer'
 import TipsPanel from '../components/Tips'
 import ScoreScreen from '../components/ScoreScreen'
 import { part1IntroQuestion, part1TopicQuestions, part2Sets, part3Sets } from '../data/prompts'
 import { useCompleted } from '../hooks/useCompleted'
+import { useSfx } from '../hooks/useSfx'
 
 const STEPS = {
   IDLE: 'idle',
@@ -39,7 +40,6 @@ function getStepConfig(step) {
   return map[step] || { seconds: 60, part: 1, label: '' }
 }
 
-function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 function pickTwoTopics() {
   const shuffled = [...part1TopicQuestions].sort(() => Math.random() - 0.5)
   return { a: shuffled[0], b: shuffled[1] }
@@ -48,6 +48,7 @@ function pickTwoTopics() {
 export default function FullPractice() {
   const { markCompleted: markP2 } = useCompleted('part2')
   const { markCompleted: markP3 } = useCompleted('part3')
+  const { playTransition } = useSfx()
   const [step, setStep] = useState(STEPS.IDLE)
   const [timerKey, setTimerKey] = useState(0)
   const [topicQs, setTopicQs] = useState({ a: '', b: '' })
@@ -55,6 +56,16 @@ export default function FullPractice() {
   const [p2Idx, setP2Idx] = useState(null)
   const [p3Set, setP3Set] = useState(null)
   const [p3Idx, setP3Idx] = useState(null)
+  const [currentTurn, setCurrentTurn] = useState('A')
+  const [phaseTimeA, setPhaseTimeA] = useState(0)
+  const [phaseTimeB, setPhaseTimeB] = useState(0)
+  const [speakingActive, setSpeakingActive] = useState(false)
+  const speakInterval = useRef(null)
+  const bufferTimeout = useRef(null)
+  const timerPausedRef = useRef(false)
+
+  const handleTimerPause = (isPaused) => { timerPausedRef.current = isPaused }
+  const handleTimerReset = () => { setPhaseTimeA(0); setPhaseTimeB(0); setSpeakingActive(false); timerPausedRef.current = false; if (bufferTimeout.current) clearTimeout(bufferTimeout.current); bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 5000) }
 
   const start = () => {
     setTopicQs(pickTwoTopics())
@@ -64,19 +75,46 @@ export default function FullPractice() {
     setP3Idx(p3i); setP3Set(part3Sets[p3i])
     setStep(STEPS.P1_A_INTRO)
     setTimerKey((k) => k + 1)
-    setChecked({})
+    setCurrentTurn('A')
+    setPhaseTimeA(0); setPhaseTimeB(0)
   }
 
+  const isP3Discussion = step === STEPS.P3_DISCUSS || step === STEPS.P3_DECIDE || step === STEPS.P3_OPINION
+
+  // Reset phase time + delay speaking counter by buffer on step change
+  useEffect(() => {
+    setPhaseTimeA(0); setPhaseTimeB(0)
+    setSpeakingActive(false)
+    setCurrentTurn('A')
+    timerPausedRef.current = false
+    if (bufferTimeout.current) clearTimeout(bufferTimeout.current)
+    if (isP3Discussion) {
+      bufferTimeout.current = setTimeout(() => setSpeakingActive(true), 5000)
+    }
+    return () => { if (bufferTimeout.current) clearTimeout(bufferTimeout.current) }
+  }, [step, isP3Discussion])
+
+  // Count speaking time — respects timer pause
+  useEffect(() => {
+    if (speakInterval.current) clearInterval(speakInterval.current)
+    if (!speakingActive) return
+    speakInterval.current = setInterval(() => {
+      if (timerPausedRef.current) return
+      if (currentTurn === 'A') setPhaseTimeA((t) => t + 1)
+      else setPhaseTimeB((t) => t + 1)
+    }, 1000)
+    return () => { if (speakInterval.current) clearInterval(speakInterval.current) }
+  }, [currentTurn, speakingActive])
+
   const advance = useCallback(() => {
+    playTransition()
     setStep((prev) => {
       const i = stepOrder.indexOf(prev)
-      if (i < stepOrder.length - 1) {
-        setTimerKey((k) => k + 1)
-        return stepOrder[i + 1]
-      }
+      if (i < stepOrder.length - 1) return stepOrder[i + 1]
       return STEPS.DONE
     })
-  }, [])
+    setTimerKey((k) => k + 1)
+  }, [playTransition])
 
   // Mark completions when we reach DONE
   useEffect(() => {
@@ -188,7 +226,24 @@ export default function FullPractice() {
               </div>
             )}
 
-            <Timer key={timerKey} seconds={config.seconds} running={true} onComplete={advance} />
+            {/* Turn indicator for Part 3 discussion phases — matches standalone Part 3 */}
+            {(step === STEPS.P3_DISCUSS || step === STEPS.P3_DECIDE || step === STEPS.P3_OPINION) && (
+              <div className="flex items-center justify-center gap-3 w-full">
+                <div className={`flex-1 text-center py-2.5 rounded-xl border-2 transition-all duration-300 ${currentTurn === 'A' ? 'border-blue-300 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800 shadow-sm scale-[1.02]' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800'}`}>
+                  <p className={`text-xs font-bold ${currentTurn === 'A' ? 'text-blue-600 dark:text-blue-400' : 'text-stone-400 dark:text-stone-500'}`}>🅰️ Candidate A</p>
+                  <p className={`text-xs mt-0.5 font-mono ${currentTurn === 'A' ? 'text-blue-500 dark:text-blue-400' : 'text-stone-400 dark:text-stone-500'}`}>{Math.floor(phaseTimeA / 60)}:{(phaseTimeA % 60).toString().padStart(2, '0')}</p>
+                </div>
+                <button onClick={() => setCurrentTurn((p) => p === 'A' ? 'B' : 'A')} className="px-3 py-2.5 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl text-xs font-semibold hover:bg-stone-700 dark:hover:bg-stone-300 active:scale-95 transition-all shrink-0 shadow-sm">
+                  Switch →
+                </button>
+                <div className={`flex-1 text-center py-2.5 rounded-xl border-2 transition-all duration-300 ${currentTurn === 'B' ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 shadow-sm scale-[1.02]' : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800'}`}>
+                  <p className={`text-xs font-bold ${currentTurn === 'B' ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-400 dark:text-stone-500'}`}>🅱️ Candidate B</p>
+                  <p className={`text-xs mt-0.5 font-mono ${currentTurn === 'B' ? 'text-emerald-500 dark:text-emerald-400' : 'text-stone-400 dark:text-stone-500'}`}>{Math.floor(phaseTimeB / 60)}:{(phaseTimeB % 60).toString().padStart(2, '0')}</p>
+                </div>
+              </div>
+            )}
+
+            <Timer key={timerKey} seconds={config.seconds} onComplete={advance} onPauseChange={handleTimerPause} onReset={handleTimerReset} />
 
             <div className="flex gap-3 justify-center">
               <button onClick={skip} className="btn-secondary"><SkipForward size={16} /> Skip</button>
