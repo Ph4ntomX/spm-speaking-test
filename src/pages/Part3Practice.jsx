@@ -5,6 +5,7 @@ import TipsPanel from '../components/Tips'
 import ScoreScreen from '../components/ScoreScreen'
 import { part3Sets } from '../data/prompts'
 import { useCompleted } from '../hooks/useCompleted'
+import { useSfx } from '../hooks/useSfx'
 
 const PHASES = { IDLE: 'idle', PREP: 'prep', DISCUSS: 'discuss', DECIDE: 'decide', OPINION: 'opinion', DONE: 'done' }
 const phaseConfig = {
@@ -43,6 +44,7 @@ const phaseChecklists = {
 
 export default function Part3Practice() {
   const { completed, markCompleted, pickRandom, resetCompleted } = useCompleted('part3')
+  const { playTransition } = useSfx()
   const [phase, setPhase] = useState(PHASES.IDLE)
   const [set, setSet] = useState(null)
   const [setIndex, setSetIndex] = useState(null)
@@ -90,13 +92,14 @@ export default function Part3Practice() {
     setPhaseTimeA(0); setPhaseTimeB(0); setTotalTimeA(0); setTotalTimeB(0)
   }
   const advance = useCallback(() => {
+    playTransition()
     setPhase((prev) => {
       const i = phaseOrder.indexOf(prev)
       if (i < phaseOrder.length - 1) { setTimerKey((k) => k + 1); setCurrentTurn('A'); return phaseOrder[i + 1] }
       if (setIndex !== null) markCompleted(setIndex, part3Sets.length)
       return PHASES.DONE
     })
-  }, [setIndex, markCompleted])
+  }, [setIndex, markCompleted, playTransition])
   const skip = () => advance()
   const switchTurn = () => setCurrentTurn((p) => (p === 'A' ? 'B' : 'A'))
   const toggleCheck = (key) => setChecked((prev) => ({ ...prev, [key]: !prev[key] }))

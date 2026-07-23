@@ -90,30 +90,23 @@ export default function TipsPanel({ types = [] }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end" onClick={handleClose}>
-          <div
-            className="absolute inset-0 bg-black/20 dark:bg-black/40 transition-opacity duration-250"
-            style={{ animation: closing ? 'fade-out 0.25s ease-in both' : 'fade-in-only 0.2s ease-out both' }}
-          />
-
-          <div
-            className="relative w-full max-w-sm bg-white dark:bg-stone-800 shadow-2xl border-l border-stone-200 dark:border-stone-700 overflow-y-auto"
-            style={{ animation: closing ? 'slide-out-right 0.25s ease-in both' : 'slide-in-right 0.3s ease-out both' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 px-5 py-4 flex items-center justify-between z-10">
-              <div className="flex items-center gap-2">
-                <Lightbulb size={18} className="text-amber-500" />
-                <h3 className="font-serif font-semibold text-stone-900 dark:text-stone-100">Speaking Guide</h3>
-              </div>
-              <button
-                onClick={handleClose}
-                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-500 dark:text-stone-400 transition-colors"
-                aria-label="Close tips"
-              >
-                <X size={20} />
-              </button>
+        <div
+          className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm bg-white dark:bg-stone-800 shadow-2xl border-l border-stone-200 dark:border-stone-700 overflow-y-auto"
+          style={{ animation: closing ? 'slide-out-right 0.25s ease-in both' : 'slide-in-right 0.2s ease-out both' }}
+        >
+          <div className="sticky top-0 bg-white dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 px-5 py-4 flex items-center justify-between z-10">
+            <div className="flex items-center gap-2">
+              <Lightbulb size={18} className="text-amber-500" />
+              <h3 className="font-serif font-semibold text-stone-900 dark:text-stone-100">Speaking Guide</h3>
             </div>
+            <button
+              onClick={handleClose}
+              className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-500 dark:text-stone-400 transition-colors"
+              aria-label="Close tips"
+            >
+              <X size={20} />
+            </button>
+          </div>
 
             <div className="p-5 space-y-6">
               {sections.map((section) => (
@@ -125,7 +118,7 @@ export default function TipsPanel({ types = [] }) {
                     <div className="space-y-1.5">
                       {section.items.map(([basic, advanced], i) => (
                         <div key={i} className="flex items-start gap-2 text-sm">
-                          <span className="text-stone-400 dark:text-stone-500 line-through shrink-0 w-20 text-right">{basic}</span>
+                          <span className="text-stone-500 dark:text-stone-400 shrink-0 w-20 text-right">{basic}</span>
                           <span className="text-stone-300 dark:text-stone-600">→</span>
                           <span className="text-stone-700 dark:text-stone-300 font-medium">{advanced}</span>
                         </div>
@@ -147,7 +140,6 @@ export default function TipsPanel({ types = [] }) {
               ))}
             </div>
           </div>
-        </div>
       )}
     </>
   )

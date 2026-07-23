@@ -5,6 +5,7 @@ import TipsPanel from '../components/Tips'
 import ScoreScreen from '../components/ScoreScreen'
 import { part2Sets } from '../data/prompts'
 import { useCompleted } from '../hooks/useCompleted'
+import { useSfx } from '../hooks/useSfx'
 
 const PHASES = {
   IDLE: 'idle', PREP_A: 'prep_a', SPEAK_A: 'speak_a',
@@ -20,6 +21,7 @@ const phaseOrder = [PHASES.PREP_A, PHASES.SPEAK_A, PHASES.PREP_B, PHASES.SPEAK_B
 
 export default function Part2Practice() {
   const { completed, markCompleted, pickRandom, resetCompleted } = useCompleted('part2')
+  const { playTransition } = useSfx()
   const [phase, setPhase] = useState(PHASES.IDLE)
   const [set, setSet] = useState(null)
   const [setIndex, setSetIndex] = useState(null)
@@ -32,13 +34,14 @@ export default function Part2Practice() {
     setPhase(PHASES.PREP_A); setTimerKey((k) => k + 1); setChecked({})
   }
   const advance = useCallback(() => {
+    playTransition()
     setPhase((prev) => {
       const i = phaseOrder.indexOf(prev)
       if (i < phaseOrder.length - 1) { setTimerKey((k) => k + 1); return phaseOrder[i + 1] }
       if (setIndex !== null) markCompleted(setIndex, part2Sets.length)
       return PHASES.DONE
     })
-  }, [setIndex, markCompleted])
+  }, [setIndex, markCompleted, playTransition])
   const skip = () => advance()
   const reset = () => { setPhase(PHASES.IDLE); setSet(null); setSetIndex(null) }
 

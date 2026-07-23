@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Play, SkipForward, RotateCcw } from 'lucide-react'
 import Timer from '../components/Timer'
 import TipsPanel from '../components/Tips'
@@ -74,12 +74,17 @@ export default function FullPractice() {
         setTimerKey((k) => k + 1)
         return stepOrder[i + 1]
       }
-      // Mark completions
-      if (p2Idx !== null) markP2(p2Idx, part2Sets.length)
-      if (p3Idx !== null) markP3(p3Idx, part3Sets.length)
       return STEPS.DONE
     })
-  }, [p2Idx, p3Idx, markP2, markP3])
+  }, [])
+
+  // Mark completions when we reach DONE
+  useEffect(() => {
+    if (step === STEPS.DONE) {
+      if (p2Idx !== null) markP2(p2Idx, part2Sets.length)
+      if (p3Idx !== null) markP3(p3Idx, part3Sets.length)
+    }
+  }, [step, p2Idx, p3Idx, markP2, markP3])
 
   const skip = () => advance()
   const reset = () => { setStep(STEPS.IDLE); setTopicQs({ a: '', b: '' }); setP2Set(null); setP3Set(null) }

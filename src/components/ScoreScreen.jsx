@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Play, RotateCcw, Check, Star, TrendingUp } from 'lucide-react'
+import { useSfx } from '../hooks/useSfx'
 
 /**
  * ScoreScreen with per-candidate scoring.
@@ -32,9 +33,11 @@ export default function ScoreScreen({ candidates, onNext, onDone, nextLabel = 'N
   const [checked, setChecked] = useState({})
   const [submitted, setSubmitted] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
+  const { playSuccess, playFanfare, playBad, playTap } = useSfx()
 
   const toggleCheck = (key) => {
     if (submitted) return
+    playTap()
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
@@ -55,8 +58,13 @@ export default function ScoreScreen({ candidates, onNext, onDone, nextLabel = 'N
     setSubmitted(true)
     const avgPct = candidateScores.reduce((a, c) => a + c.pct, 0) / candidateScores.length
     if (avgPct >= 75) {
+      playFanfare()
       setShowConfetti(true)
       setTimeout(() => setShowConfetti(false), 3000)
+    } else if (avgPct >= 50) {
+      playSuccess()
+    } else {
+      playBad()
     }
   }
 
