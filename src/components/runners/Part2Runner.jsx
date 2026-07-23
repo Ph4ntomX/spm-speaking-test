@@ -5,17 +5,19 @@ import { useSfx } from '../../hooks/useSfx'
 
 /**
  * Part 2 active practice flow.
- * Flow: A prep (20s) → A speak (60s) → B prep (20s) → B speak (60s)
+ * Flow: A prep (20s) → A speak (60s) → B respond (20s) → B prep (20s) → B speak (60s) → A respond (20s)
  */
-const PHASES = { PREP_A: 'prep_a', SPEAK_A: 'speak_a', PREP_B: 'prep_b', SPEAK_B: 'speak_b' }
+const PHASES = { PREP_A: 'prep_a', SPEAK_A: 'speak_a', RESPOND_B: 'respond_b', PREP_B: 'prep_b', SPEAK_B: 'speak_b', RESPOND_A: 'respond_a' }
 const phaseConfig = {
-  [PHASES.PREP_A]: { seconds: 20, label: 'Candidate A — Preparation', candidate: 'A' },
-  [PHASES.SPEAK_A]: { seconds: 60, label: 'Candidate A — Speaking', candidate: 'A' },
-  [PHASES.PREP_B]: { seconds: 20, label: 'Candidate B — Preparation', candidate: 'B' },
-  [PHASES.SPEAK_B]: { seconds: 60, label: 'Candidate B — Speaking', candidate: 'B' },
+  [PHASES.PREP_A]: { seconds: 20, label: 'Candidate A — Preparation', candidate: 'A', type: 'prep' },
+  [PHASES.SPEAK_A]: { seconds: 60, label: 'Candidate A — Speaking', candidate: 'A', type: 'speak' },
+  [PHASES.RESPOND_B]: { seconds: 20, label: 'Candidate B — Quick Response', candidate: 'B', type: 'respond' },
+  [PHASES.PREP_B]: { seconds: 20, label: 'Candidate B — Preparation', candidate: 'B', type: 'prep' },
+  [PHASES.SPEAK_B]: { seconds: 60, label: 'Candidate B — Speaking', candidate: 'B', type: 'speak' },
+  [PHASES.RESPOND_A]: { seconds: 20, label: 'Candidate A — Quick Response', candidate: 'A', type: 'respond' },
 }
-const phaseOrder = [PHASES.PREP_A, PHASES.SPEAK_A, PHASES.PREP_B, PHASES.SPEAK_B]
-const stepLabels = ['A Prep', 'A Speak', 'B Prep', 'B Speak']
+const phaseOrder = [PHASES.PREP_A, PHASES.SPEAK_A, PHASES.RESPOND_B, PHASES.PREP_B, PHASES.SPEAK_B, PHASES.RESPOND_A]
+const stepLabels = ['A Prep', 'A Speak', 'B Reply', 'B Prep', 'B Speak', 'A Reply']
 
 /** Build the per-candidate score sections for a Part 2 set. */
 export function buildPart2Candidates(set) {
@@ -59,6 +61,8 @@ export default function Part2Runner({ set, onComplete, onStop }) {
   const currentPhaseIdx = phaseOrder.indexOf(phase)
   const activeCandidate = currentConfig.candidate
   const activeTopic = activeCandidate === 'A' ? set.a : set.b
+  // For respond phases, show the OTHER candidate's follow-up question
+  const followUpQuestion = phase === PHASES.RESPOND_B ? set.a.followUp : phase === PHASES.RESPOND_A ? set.b.followUp : null
 
   return (
     <div className="w-full space-y-5 animate-fade-in">
@@ -83,23 +87,31 @@ export default function Part2Runner({ set, onComplete, onStop }) {
 
       <p className="text-xs text-stone-400 dark:text-stone-500 text-center">{set.state}</p>
 
-      {/* Active candidate */}
-      <div className={`rounded-xl p-5 border-2 transition-all duration-300 ${activeCandidate === 'A' ? 'border-blue-300 bg-blue-50/80 dark:bg-blue-950/20 dark:border-blue-800' : 'border-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/20 dark:border-emerald-800'}`}>
-        <p className={`text-xs font-bold mb-1 uppercase tracking-wide ${activeCandidate === 'A' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>Candidate {activeCandidate}</p>
-        <p className="font-serif font-semibold text-stone-900 dark:text-stone-100 text-lg mb-3">{activeTopic.topic}</p>
-        <p className="text-xs text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wider">You should say:</p>
-        <ul className="space-y-1.5">
-          {activeTopic.prompts.map((prompt, i) => (
-            <li key={i} className="text-sm text-stone-700 dark:text-stone-300 flex items-start gap-2.5 leading-relaxed">
-              <span className="w-5 h-5 shrink-0 rounded-full bg-stone-200 dark:bg-stone-600 text-stone-600 dark:text-stone-300 flex items-center justify-center text-xs font-bold mt-0.5">{i + 1}</span>
-              {prompt}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Follow-up response phase */}
+      {followUpQuestion ? (
+        <div className={`rounded-xl p-5 border-2 ${activeCandidate === 'A' ? 'border-blue-300 bg-blue-50/80 dark:bg-blue-950/20 dark:border-blue-800' : 'border-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/20 dark:border-emerald-800'}`}>
+          <p className={`text-xs font-bold mb-2 uppercase tracking-wide ${activeCandidate === 'A' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>Candidate {activeCandidate} — Quick Response</p>
+          <p className="font-serif font-semibold text-stone-900 dark:text-stone-100 text-lg leading-relaxed">{followUpQuestion}</p>
+        </div>
+      ) : (
+        /* Normal prep/speak phase — show topic and prompts */
+        <div className={`rounded-xl p-5 border-2 transition-all duration-300 ${activeCandidate === 'A' ? 'border-blue-300 bg-blue-50/80 dark:bg-blue-950/20 dark:border-blue-800' : 'border-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/20 dark:border-emerald-800'}`}>
+          <p className={`text-xs font-bold mb-1 uppercase tracking-wide ${activeCandidate === 'A' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>Candidate {activeCandidate}</p>
+          <p className="font-serif font-semibold text-stone-900 dark:text-stone-100 text-lg mb-3">{activeTopic.topic}</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wider">You should say:</p>
+          <ul className="space-y-1.5">
+            {activeTopic.prompts.map((prompt, i) => (
+              <li key={i} className="text-sm text-stone-700 dark:text-stone-300 flex items-start gap-2.5 leading-relaxed">
+                <span className="w-5 h-5 shrink-0 rounded-full bg-stone-200 dark:bg-stone-600 text-stone-600 dark:text-stone-300 flex items-center justify-center text-xs font-bold mt-0.5">{i + 1}</span>
+                {prompt}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="text-sm font-medium text-stone-700 dark:text-stone-300 text-center">{currentConfig.label}</p>
-      <Timer key={timerKey} seconds={currentConfig.seconds} onComplete={advance} />
+      <Timer key={timerKey} seconds={currentConfig.seconds} buffer={currentConfig.type === 'prep' ? 5 : 2} onComplete={advance} />
 
       <div className="flex gap-3 justify-center">
         <button onClick={advance} className="btn-secondary"><SkipForward size={16} /> Skip</button>

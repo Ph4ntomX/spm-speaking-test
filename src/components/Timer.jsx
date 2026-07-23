@@ -14,11 +14,11 @@ import { useSfx } from '../hooks/useSfx'
  * - Pause is checked inside the interval callback via ref (no effect re-run needed).
  * - All state is derived from a single "totalTicks" counter.
  */
-const BUFFER_SECONDS = 5
+const DEFAULT_BUFFER = 5
 
-export default function Timer({ seconds, onComplete, onPauseChange, onReset }) {
-  const totalTicks = BUFFER_SECONDS + seconds
-  const [tick, setTick] = useState(0) // counts UP from 0 to totalTicks
+export default function Timer({ seconds, onComplete, onPauseChange, onReset, buffer = DEFAULT_BUFFER }) {
+  const totalTicks = buffer + seconds
+  const [tick, setTick] = useState(0)
   const [paused, setPaused] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
 
@@ -26,23 +26,20 @@ export default function Timer({ seconds, onComplete, onPauseChange, onReset }) {
   const onCompleteRef = useRef(onComplete)
   const intervalRef = useRef(null)
 
-  // Keep onComplete ref fresh without restarting interval
   useEffect(() => { onCompleteRef.current = onComplete }, [onComplete])
 
-  // Single interval — created once on mount, cleaned on unmount
   useEffect(() => {
     intervalRef.current = setInterval(() => {
-      if (pausedRef.current) return // skip this tick, interval stays alive
+      if (pausedRef.current) return
       setTick((prev) => prev + 1)
     }, 1000)
     return () => clearInterval(intervalRef.current)
   }, [])
 
-  // Derive values from tick
-  const isBuffering = tick < BUFFER_SECONDS
-  const elapsed = Math.max(0, tick - BUFFER_SECONDS)
+  const isBuffering = tick < buffer
+  const elapsed = Math.max(0, tick - buffer)
   const remaining = Math.max(0, seconds - elapsed)
-  const bufferDisplay = BUFFER_SECONDS - tick
+  const bufferDisplay = buffer - tick
 
   // Sound effects + completion
   const { playWarning, playTimeUp, playTap } = useSfx()
