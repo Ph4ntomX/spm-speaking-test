@@ -18,7 +18,7 @@ export default function Home() {
       <div className="text-center py-6 animate-fade-in">
         <h2 className="text-3xl sm:text-4xl font-serif font-bold text-stone-900 dark:text-stone-100 tracking-tight">SPM Speaking Timer</h2>
         <p className="text-stone-600 dark:text-stone-400 mt-2 max-w-md mx-auto">
-          Master your timing for Paper 1119/3. Practice with real exam topics from 2023 trial papers.
+          Master your timing for Paper 1119/3. Practice with real exam topics from 2026 trial papers.
         </p>
       </div>
 

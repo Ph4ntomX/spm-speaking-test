@@ -9,7 +9,7 @@ Free timer tool for Malaysian students preparing for the SPM English Speaking Te
 - **Part 3** — Collaborative task with discussion/decision/opinion phases, turn-taking tracker
 - **Full Practice** — Complete mock test running all 3 parts in sequence
 - **Scoring** — Per-candidate checklist and grade after each session
-- **45 Part 2 sets + 46 Part 3 sets** from 2023 SPM trial papers (auto-cycles, no repeats)
+- **45 Part 2 sets + 46 Part 3 sets** from 2026 SPM trial papers (auto-cycles, no repeats)
 - **Tips panel** — STEEP-A-STEEP technique, PICK-A-POINT, connectors, vocabulary upgrades
 - **Works offline** — installable PWA. Visit once, then practice anytime without internet.
 
