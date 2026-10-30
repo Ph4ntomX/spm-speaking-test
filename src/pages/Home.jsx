@@ -1,17 +1,11 @@
 import { Link } from 'react-router-dom'
 import { MessageCircle, Presentation, Users, PlayCircle } from 'lucide-react'
 import { part2Sets, part3Sets } from '../data/prompts'
-
-function getProgress(key, total) {
-  try {
-    const saved = localStorage.getItem(`spm-timer-completed-${key}`)
-    return { done: saved ? JSON.parse(saved).length : 0, total }
-  } catch { return { done: 0, total } }
-}
+import { useCompleted } from '../hooks/useCompleted'
 
 export default function Home() {
-  const p2 = getProgress('part2', part2Sets.length)
-  const p3 = getProgress('part3', part3Sets.length)
+  const { completed: p2Done } = useCompleted('part2')
+  const { completed: p3Done } = useCompleted('part3')
 
   return (
     <div className="space-y-8">
@@ -59,7 +53,7 @@ export default function Home() {
             <h4 className="font-serif font-semibold text-stone-900 dark:text-stone-100">Part 2: Long Turn</h4>
             <p className="text-sm text-stone-500 dark:text-stone-400">A & B take turns — prep + speak</p>
           </div>
-          {p2.done > 0 && <span className="text-xs text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full shrink-0">{p2.done}/{p2.total}</span>}
+          {p2Done.length > 0 && <span className="text-xs text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full shrink-0">{p2Done.length}/{part2Sets.length}</span>}
         </Link>
 
         <Link to="/part-3" className="group card p-4 flex items-center gap-4 hover:border-purple-300 dark:hover:border-purple-700 hover:shadow-md transition-all duration-200">
@@ -70,7 +64,7 @@ export default function Home() {
             <h4 className="font-serif font-semibold text-stone-900 dark:text-stone-100">Part 3: Collaborative</h4>
             <p className="text-sm text-stone-500 dark:text-stone-400">Discuss → Decide → Opinion</p>
           </div>
-          {p3.done > 0 && <span className="text-xs text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full shrink-0">{p3.done}/{p3.total}</span>}
+          {p3Done.length > 0 && <span className="text-xs text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full shrink-0">{p3Done.length}/{part3Sets.length}</span>}
         </Link>
 
         <Link to="/full" className="group card p-4 flex items-center gap-4 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all duration-200 ring-1 ring-indigo-100 dark:ring-indigo-900/50">

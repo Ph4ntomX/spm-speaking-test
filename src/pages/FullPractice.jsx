@@ -13,8 +13,9 @@ const STAGES = ['part1', 'part2', 'part3']
 const stageLabels = { part1: 'Part 1', part2: 'Part 2', part3: 'Part 3' }
 
 export default function FullPractice() {
-  const { markCompleted: markP2 } = useCompleted('part2')
-  const { markCompleted: markP3 } = useCompleted('part3')
+  const { markCompleted: markP2, pickRandom: pickP2 } = useCompleted('part2')
+  const { markCompleted: markP3, pickRandom: pickP3 } = useCompleted('part3')
+
   const [stage, setStage] = useState('idle') // idle | part1 | part2 | part3 | done
   const [topics, setTopics] = useState({ a: '', b: '' })
   const [p2, setP2] = useState({ set: null, idx: null })
@@ -23,21 +24,25 @@ export default function FullPractice() {
 
   const start = () => {
     setTopics(pickPart1Topics())
-    const i2 = Math.floor(Math.random() * part2Sets.length)
-    const i3 = Math.floor(Math.random() * part3Sets.length)
+    const i2 = pickP2(part2Sets.length)
+    const i3 = pickP3(part3Sets.length)
     setP2({ set: part2Sets[i2], idx: i2 })
     setP3({ set: part3Sets[i3], idx: i3 })
     setStage('part1')
   }
 
   const finishPart3 = (result) => {
-    if (p2.idx !== null) markP2(p2.idx, part2Sets.length)
-    if (p3.idx !== null) markP3(p3.idx, part3Sets.length)
+    if (p2.idx !== null) markP2(p2.idx)
+    if (p3.idx !== null) markP3(p3.idx)
     setTimes(result || { totalA: 0, totalB: 0 })
     setStage('done')
   }
 
-  const reset = () => { setStage('idle'); setP2({ set: null, idx: null }); setP3({ set: null, idx: null }) }
+  const reset = () => {
+    setStage('idle')
+    setP2({ set: null, idx: null })
+    setP3({ set: null, idx: null })
+  }
 
   const combinedCandidates = p2.set
     ? mergeCandidates(buildPart2Candidates(p2.set), buildPart3Candidates())
@@ -79,15 +84,27 @@ export default function FullPractice() {
         )}
 
         {stage === 'part1' && (
-          <Part1Runner topics={topics} onComplete={() => setStage('part2')} onStop={reset} />
+          <Part1Runner
+            topics={topics}
+            onComplete={() => setStage('part2')}
+            onStop={reset}
+          />
         )}
 
         {stage === 'part2' && p2.set && (
-          <Part2Runner set={p2.set} onComplete={() => setStage('part3')} onStop={reset} />
+          <Part2Runner
+            set={p2.set}
+            onComplete={() => setStage('part3')}
+            onStop={reset}
+          />
         )}
 
         {stage === 'part3' && p3.set && (
-          <Part3Runner set={p3.set} onComplete={finishPart3} onStop={reset} />
+          <Part3Runner
+            set={p3.set}
+            onComplete={finishPart3}
+            onStop={reset}
+          />
         )}
 
         {stage === 'done' && (
